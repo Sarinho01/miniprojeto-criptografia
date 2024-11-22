@@ -1,5 +1,4 @@
 import pywt
-from PIL import Image
 
 from criptography.image_compactator.CompactorImage import CompactImage
 
@@ -40,6 +39,5 @@ class CompactImageDWT(CompactImage):
     def unpack_image_and_get_lsb_bits(self, image, message_size):
         coeffs = pywt.dwt2(image, 'haar')
         ll, (_, _, _) = coeffs
-        print(ll.flatten())
         message_bits = extract_message(ll, message_size)
         return message_bits

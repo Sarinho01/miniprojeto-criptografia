@@ -1,24 +1,32 @@
-from algorithm.PaperAlgorithm import PaperAlgorithm
+import base64
 import json
 
+from Crypto.Random import get_random_bytes
+
+from algorithm.PaperAlgorithm import PaperAlgorithm
+from criptography.message_encryption.AESCryptographyMessage import AESEncryptMessage
 from utils.cripto.CriptoUtils import bits_to_bytes
 
 
-def create_json(codebook, message_size):
+def create_json(codebook, aes_key, message_size):
     json_data = {
         "message_size": message_size,
-        "huffman_codebook": codebook
+        "huffman_codebook": codebook,
+        "aes_key": base64.b64encode(aes_key).decode()
     }
 
     return json.dumps(json_data)
 
 
-class BasePaperAlgorithm(PaperAlgorithm):
+class ImprovedAlgorithm(PaperAlgorithm):
+
     def put_message_in_image_and_compact(self, image, message):
-        message_encrypted = self.encrypt_message.encrypt_message_and_put_in_base64(message)
+        aes_encrypt = AESEncryptMessage(get_random_bytes(32))
+
+        message_encrypted = aes_encrypt.encrypt_message_and_put_in_base64(message)
         message_compressed_bits, codebook = self.compactor_message.compact_message(message_encrypted)
 
-        json_data = create_json(codebook, len(message_compressed_bits))
+        json_data = create_json(codebook, aes_encrypt.key, len(message_compressed_bits))
 
         json_encrypted = self.encrypt_message.encrypt_message(json_data)
 
@@ -41,7 +49,8 @@ class BasePaperAlgorithm(PaperAlgorithm):
 
         json_size = int.from_bytes(bits_to_bytes(json_size_bits))
 
-        json_data_encrypted_bits = self.compact_image.unpack_image_and_get_lsb_bits(image, (current_index, json_size - 1))
+        json_data_encrypted_bits = self.compact_image.unpack_image_and_get_lsb_bits(image,
+                                                                                    (current_index, json_size - 1))
         current_index = json_size + current_index
 
         json_data = self.encrypt_message.dencrypt_message(bits_to_bytes(json_data_encrypted_bits))
@@ -50,11 +59,13 @@ class BasePaperAlgorithm(PaperAlgorithm):
 
         codebook = json_data["huffman_codebook"]
         message_size = json_data["message_size"]
+        aes_encrypt = AESEncryptMessage(base64.b64decode(json_data["aes_key"]))
 
-        message_compressed_bites = self.compact_image.unpack_image_and_get_lsb_bits(image, (current_index, message_size - 1))
+        message_compressed_bites = self.compact_image.unpack_image_and_get_lsb_bits(image,
+                                                                                    (current_index, message_size - 1))
 
         message_encrypted_base64 = self.compactor_message.unpack_message(message_compressed_bites, codebook)
 
-        message_bytes = self.encrypt_message.dencrypt_message_in_base64(message_encrypted_base64)
+        message_bytes = aes_encrypt.dencrypt_message_in_base64(message_encrypted_base64)
 
         return message_bytes
