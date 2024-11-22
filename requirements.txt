@@ -1,2 +1,5 @@
 pycryptodome
 huffman
+numpy
+Pillow
+pywavelets
