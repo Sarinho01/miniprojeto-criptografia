@@ -3,3 +3,5 @@ huffman
 numpy
 Pillow
 pywavelets
+scikit-image
+matplotlib

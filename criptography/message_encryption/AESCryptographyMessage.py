@@ -25,6 +25,7 @@ class AESEncryptMessage(EncryptMessage):
         return decrypted_message.decode()
 
     def encrypt_message(self, message):
+        message = message.encode()
         nonce = get_random_bytes(8)
         counter = Counter.new(64, prefix=nonce)
 
